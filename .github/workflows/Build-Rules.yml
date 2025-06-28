@@ -21,7 +21,7 @@ jobs:
       # Run build script
       - name: Build Rules
         run: |
-          bash .github/script/build-rules.sh Ad|Directfix|Proxy
+          bash .github/script/build-rules.sh Ad
 
       # Commit and push changes if detected
       - name: Commit Changes
