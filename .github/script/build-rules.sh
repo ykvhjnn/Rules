@@ -53,8 +53,6 @@ https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Direct.txt
 urls_map["Ad"]="
 https://raw.githubusercontent.com/ghvjjjj/adblockfilters/refs/heads/main/rules/adblockdomain.txt
 https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdomainlite.txt
-https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt
-https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-domains.txt
 https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-adguard.txt
 https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/dns.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.xiaomi.txt
