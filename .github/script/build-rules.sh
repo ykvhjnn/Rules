@@ -34,12 +34,18 @@ cd "$(cd "$(dirname "$0")"; pwd)" || error_exit "无法进入脚本目录"
 declare -A urls_map
 
 urls_map["Proxy"]="
+https://ruleset.skk.moe/Clash/domainset/speedtest.txt
+https://ruleset.skk.moe/Clash/non_ip/my_proxy.txt
+https://ruleset.skk.moe/Clash/non_ip/ai.txt
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/GitHub/GitHub.list
 https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/proxy.list
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/Global/Global_Domain_For_Clash.txt
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Proxy.txt
 "
 
 urls_map["Directfix"]="
+https://ruleset.skk.moe/Clash/non_ip/microsoft_cdn.txt
+https://ruleset.skk.moe/Clash/non_ip/lan.txt
 https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/private.list
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Direct.txt
 "
@@ -53,12 +59,9 @@ https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/ma
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.xiaomi.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.oppo-realme.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.vivo.txt
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.roku.txt
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.lgwebos.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.tiktok.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.samsung.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.winoffice.txt
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.amazon.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.apple.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.huawei.txt
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Ad.txt
