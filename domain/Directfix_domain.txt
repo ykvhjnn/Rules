@@ -4,7 +4,6 @@ setmeup.arubanetworks.com
 repeater.asus.com
 router.asus.com
 asusrouter.com
-www.asusrouter.com
 aterm.me
 cn.bing.com
 bing.com.cn
@@ -139,7 +138,6 @@ sdx.microsoft.com
 download.visualstudio.microsoft.com
 login.microsoftonline.com
 miwifi.com
-www.miwifi.com
 mobile.hotspot
 my.router
 ntt.setup

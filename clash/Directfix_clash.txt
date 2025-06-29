@@ -4,7 +4,6 @@ DOMAIN-SUFFIX,setmeup.arubanetworks.com
 DOMAIN-SUFFIX,repeater.asus.com
 DOMAIN-SUFFIX,router.asus.com
 DOMAIN-SUFFIX,asusrouter.com
-DOMAIN-SUFFIX,www.asusrouter.com
 DOMAIN-SUFFIX,aterm.me
 DOMAIN-SUFFIX,cn.bing.com
 DOMAIN-SUFFIX,bing.com.cn
@@ -139,7 +138,6 @@ DOMAIN-SUFFIX,sdx.microsoft.com
 DOMAIN-SUFFIX,download.visualstudio.microsoft.com
 DOMAIN-SUFFIX,login.microsoftonline.com
 DOMAIN-SUFFIX,miwifi.com
-DOMAIN-SUFFIX,www.miwifi.com
 DOMAIN-SUFFIX,mobile.hotspot
 DOMAIN-SUFFIX,my.router
 DOMAIN-SUFFIX,ntt.setup
