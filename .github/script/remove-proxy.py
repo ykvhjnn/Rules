@@ -48,42 +48,42 @@ def should_keep(domain: str) -> bool:
 
 # ========== 流式处理核心逻辑 ==========
 def process_large_file(input_file: str):
-    """处理大文件的核心函数（内存优化版）"""
+    """处理大文件的核心函数（无去重与排序，白名单插入开头）"""
     log(f"开始处理: {input_file} (文件大小: {os.path.getsize(input_file)/1024/1024:.2f}MB)", major=True)
     output_file = f"{input_file}.processed"
     line_count = 0
     kept_count = 0
-    
+
     try:
         with open(input_file, "r", encoding="utf8") as fin, \
              open(output_file, "w", encoding="utf8") as fout:
-            
-            # 第一遍：流式处理原始文件
+
+            # 先写入 ADD_DOMAIN（白名单）到文件开头
+            for domain in ADD_DOMAIN:
+                fout.write(f"{domain}\n")
+                kept_count += 1
+
+            # 再流式处理原始文件，按行判断是否保留
             for line in fin:
                 line_count += 1
                 domain = line.strip()
                 if not domain or domain.startswith("#"):
                     continue
-                    
+
                 if should_keep(domain):
                     fout.write(f"{domain}\n")
                     kept_count += 1
-                    
+
                 # 每10万行输出进度
                 if line_count % 100000 == 0:
                     log(f"已处理 {line_count} 行, 保留 {kept_count} 条规则")
-            
-            # 第二遍：确保白名单域名全部写入 (O(n)复杂度)
-            for domain in ADD_DOMAIN:
-                fout.write(f"{domain}\n")
-                kept_count += 1
-    
+
     except Exception as e:
         log(f"处理失败: {str(e)}", major=True)
         if os.path.exists(output_file):
             os.remove(output_file)
         sys.exit(1)
-    
+
     # 原子操作：替换原文件
     os.replace(output_file, input_file)
     log(f"处理完成: 总行数={line_count}, 保留规则={kept_count}", major=True)
@@ -92,5 +92,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python script.py <filename>")
         sys.exit(1)
-        
+
     process_large_file(sys.argv[1])
