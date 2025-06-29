@@ -52,10 +52,11 @@ https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Direct.txt
 
 urls_map["Ad"]="
 https://raw.githubusercontent.com/ghvjjjj/adblockfilters/refs/heads/main/rules/adblockdomain.txt
-https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdnslite.txt
+https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdomainlite.txt
 https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt
 https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-domains.txt
 https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-adguard.txt
+https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/dns.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.xiaomi.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.oppo-realme.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.vivo.txt
@@ -216,7 +217,7 @@ mv "$mihomo_txt_file" "$repo_root/txt/$mihomo_txt_file"
 mv "$mihomo_mrs_file" "$repo_root/mrs/$mihomo_mrs_file"
 mv "$domain_file" "$repo_root/domain/$domain_file"
 mv "$clash_file" "$repo_root/clash/$clash_file"
-mv "Ad_adblock.txt" "$repo_root/adblock/Ad_adblock.txt"
+mv "$adblock_file" "$repo_root/adblock/$adblock_file"
 
 rm -f "${group}_tmp.txt"
 
