@@ -216,7 +216,7 @@ mv "$mihomo_txt_file" "$repo_root/txt/$mihomo_txt_file"
 mv "$mihomo_mrs_file" "$repo_root/mrs/$mihomo_mrs_file"
 mv "$domain_file" "$repo_root/domain/$domain_file"
 mv "$clash_file" "$repo_root/clash/$clash_file"
-mv "$adblock_file" "$repo_root/adblock/$adblock_file"
+mv "Ad_adblock.txt" "$repo_root/adblock/Ad_adblock.txt"
 
 rm -f "${group}_tmp.txt"
 
