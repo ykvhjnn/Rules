@@ -100,6 +100,8 @@ domain_file="${group}_domain.txt"
 tmp_file="${group}_tmp.txt"
 mihomo_txt_file="${group}_Mihomo.txt"
 mihomo_mrs_file="${mihomo_txt_file%.txt}.mrs"
+clash_file="${group}_clash.txt"
+adblock_file="${group}_adblock.txt"
 
 # -----------------------------------------------------------------------------
 # 【步骤8】下载 Mihomo 工具（只下载一次，已存在则跳过）
@@ -135,13 +137,11 @@ download_mihomo
 # -----------------------------------------------------------------------------
 echo "[$(date '+%H:%M:%S')] 开始并发下载规则源..."
 
-# 下载速度优化：最多 8 并发，失败重试，全部合并
 urls_list=()
 while read -r url; do
     [[ -n "$url" ]] && urls_list+=("$url")
 done <<< "${urls_map[$group]}"
 
-pids=()
 for url in "${urls_list[@]}"; do
     {
         out="${tmp_file}_$RANDOM"
@@ -151,7 +151,6 @@ for url in "${urls_list[@]}"; do
             echo "[$(date '+%H:%M:%S')] [WARN] 拉取失败: $url" >&2
         fi
     } &
-    # 限制最大并发数为8，防止过载
     if [[ $(jobs -rp | wc -l) -ge 8 ]]; then
         wait -n
     fi
@@ -192,7 +191,7 @@ echo "[$(date '+%H:%M:%S')] 规则总数: $rule_count"
 # -----------------------------------------------------------------------------
 # 【步骤14】格式化输出，全部加前缀 +.
 # -----------------------------------------------------------------------------
-sed "s/^/\\+\\./g" "$domain_file" > "$mihomo_txt_file"
+sed "s/^/\+\./g" "$domain_file" > "$mihomo_txt_file"
 
 # -----------------------------------------------------------------------------
 # 【步骤15】调用 Mihomo 工具转换为mrs格式
@@ -202,11 +201,23 @@ if ! "./$MIHOMO_TOOL" convert-ruleset domain text "$mihomo_txt_file" "$mihomo_mr
 fi
 
 # -----------------------------------------------------------------------------
-# 【步骤16】整理输出文件夹并清理临时文件
+# 【步骤16】生成 Clash 和 Adblock 格式
 # -----------------------------------------------------------------------------
-mkdir -p ../txt
-mv "$mihomo_txt_file" "../txt/$mihomo_txt_file"
-mv "$mihomo_mrs_file" "../$mihomo_mrs_file"
-rm -rf ./*.txt
+awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "DOMAIN-SUFFIX,"$0}' "$domain_file" > "$clash_file"
+awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "||"$0"^"}' "$domain_file" > "$adblock_file"
+
+# -----------------------------------------------------------------------------
+# 【步骤17】整理输出文件夹并清理临时文件
+# -----------------------------------------------------------------------------
+repo_root="$(cd ../.. && pwd)"
+mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock"
+
+mv "$mihomo_txt_file" "$repo_root/txt/$mihomo_txt_file"
+mv "$mihomo_mrs_file" "$repo_root/mrs/$mihomo_mrs_file"
+mv "$domain_file" "$repo_root/domain/$domain_file"
+mv "$clash_file" "$repo_root/clash/$clash_file"
+mv "$adblock_file" "$repo_root/adblock/$adblock_file"
+
+rm -f "${group}_tmp.txt"
 
 echo "[$(date '+%H:%M:%S')] [完成] $group 规则生成并清理完毕"
