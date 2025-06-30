@@ -115,6 +115,7 @@
 +.9.e.f.ip6.arpa
 +.a.e.f.ip6.arpa
 +.b.e.f.ip6.arpa
++.ipv4dns.com
 +.jsdelivr.net
 +.leike.cc
 +.live.com

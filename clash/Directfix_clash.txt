@@ -115,6 +115,7 @@ DOMAIN-SUFFIX,8.e.f.ip6.arpa
 DOMAIN-SUFFIX,9.e.f.ip6.arpa
 DOMAIN-SUFFIX,a.e.f.ip6.arpa
 DOMAIN-SUFFIX,b.e.f.ip6.arpa
+DOMAIN-SUFFIX,ipv4dns.com
 DOMAIN-SUFFIX,jsdelivr.net
 DOMAIN-SUFFIX,leike.cc
 DOMAIN-SUFFIX,live.com
