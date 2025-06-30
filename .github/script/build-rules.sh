@@ -270,7 +270,8 @@ awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "||"$0"^"}' "$dom
 # -----------------------------------------------------------------------------
 # 【步骤17】使用sing-box工具转换为srs格式
 # -----------------------------------------------------------------------------
-if ! "./$SINGBOX_TOOL" rule-set compile "$singbox_file" "$singbox_srs_file"; then
+# 修正: 使用正确的命令行参数格式
+if ! "./$SINGBOX_TOOL" rule-set compile "$singbox_file" -o "$singbox_srs_file"; then
     error_exit "sing-box 工具转换 $singbox_file 失败"
 fi
 
