@@ -101,12 +101,15 @@ mihomo_txt_file="${group}_Mihomo.txt"
 mihomo_mrs_file="${mihomo_txt_file%.txt}.mrs"
 clash_file="${group}_clash.txt"
 adblock_file="${group}_adblock.txt"
-singbox_file="${group}_singbox.json"  # 新增: sing-box格式文件名
+singbox_file="${group}_singbox.json"  # sing-box json格式文件名
+singbox_srs_file="${group}_singbox.srs"  # sing-box srs格式文件名
 
 # -----------------------------------------------------------------------------
-# 【步骤8】下载 Mihomo 工具（只下载一次，已存在则跳过）
+# 【步骤8】下载 Mihomo 和 sing-box 工具（只下载一次，已存在则跳过）
 # -----------------------------------------------------------------------------
 MIHOMO_TOOL=".mihomo_tool"
+SINGBOX_TOOL=".singbox_tool"
+
 function download_mihomo() {
     if [[ -f "$MIHOMO_TOOL" && -x "$MIHOMO_TOOL" ]]; then
         echo "[$(date '+%H:%M:%S')] Mihomo 工具已存在，跳过下载"
@@ -124,7 +127,38 @@ function download_mihomo() {
     mv "$tool_name" "$MIHOMO_TOOL"
     rm -f version.txt
 }
+
+function download_singbox() {
+    if [[ -f "$SINGBOX_TOOL" && -x "$SINGBOX_TOOL" ]]; then
+        echo "[$(date '+%H:%M:%S')] sing-box 工具已存在，跳过下载"
+        return
+    fi
+    echo "[$(date '+%H:%M:%S')] 开始下载 sing-box 工具..."
+    
+    # 获取最新的sing-box版本
+    latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
+    if [[ -z "$latest_version" ]]; then
+        error_exit "获取 sing-box 版本失败"
+    fi
+    
+    # 下载sing-box工具
+    wget -q "https://github.com/SagerNet/sing-box/releases/download/${latest_version}/sing-box-${latest_version#v}-linux-amd64.tar.gz" \
+        || error_exit "下载 sing-box 工具失败"
+    
+    tar xzf "sing-box-${latest_version#v}-linux-amd64.tar.gz" \
+        || error_exit "解压 sing-box 工具失败"
+    
+    mv "sing-box-${latest_version#v}-linux-amd64/sing-box" "$SINGBOX_TOOL" \
+        || error_exit "移动 sing-box 工具失败"
+    
+    chmod +x "$SINGBOX_TOOL" || error_exit "赋予 sing-box 工具可执行权限失败"
+    
+    # 清理临时文件
+    rm -rf "sing-box-${latest_version#v}-linux-amd64" "sing-box-${latest_version#v}-linux-amd64.tar.gz"
+}
+
 download_mihomo
+download_singbox
 
 # -----------------------------------------------------------------------------
 # 【步骤9】清理旧临时文件，防止数据混杂
@@ -185,7 +219,7 @@ done
 # 【步骤13】统计最终规则数量，排除空行与注释
 # -----------------------------------------------------------------------------
 rule_count=$(grep -vE '^\s*$|^#' "$domain_file" | wc -l)
-echo "[$(date '+%H:%M:%S')] 文件: $mihomo_txt_file, $mihomo_mrs_file, $singbox_file"  # 更新输出信息
+echo "[$(date '+%H:%M:%S')] 文件: $mihomo_txt_file, $mihomo_mrs_file, $singbox_file, $singbox_srs_file"
 echo "[$(date '+%H:%M:%S')] 规则总数: $rule_count"
 
 # -----------------------------------------------------------------------------
@@ -234,17 +268,25 @@ awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "||"$0"^"}' "$dom
 } > "$singbox_file"
 
 # -----------------------------------------------------------------------------
-# 【步骤17】整理输出文件夹并清理临时文件
+# 【步骤17】使用sing-box工具转换为srs格式
+# -----------------------------------------------------------------------------
+if ! "./$SINGBOX_TOOL" rule-set compile "$singbox_file" "$singbox_srs_file"; then
+    error_exit "sing-box 工具转换 $singbox_file 失败"
+fi
+
+# -----------------------------------------------------------------------------
+# 【步骤18】整理输出文件夹并清理临时文件
 # -----------------------------------------------------------------------------
 repo_root="$(cd ../.. && pwd)"
-mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock" "$repo_root/singbox"  # 添加singbox目录
+mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock" "$repo_root/singbox" "$repo_root/srs"
 
 mv "$mihomo_txt_file" "$repo_root/txt/$mihomo_txt_file"
 mv "$mihomo_mrs_file" "$repo_root/mrs/$mihomo_mrs_file"
 mv "$domain_file" "$repo_root/domain/$domain_file"
 mv "$clash_file" "$repo_root/clash/$clash_file"
 mv "$adblock_file" "$repo_root/adblock/$adblock_file"
-mv "$singbox_file" "$repo_root/singbox/$singbox_file"  # 移动sing-box文件
+mv "$singbox_file" "$repo_root/singbox/$singbox_file"
+mv "$singbox_srs_file" "$repo_root/srs/$singbox_srs_file"
 
 rm -f "${group}_tmp.txt"
 
