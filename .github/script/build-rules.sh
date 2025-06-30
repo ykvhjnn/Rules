@@ -101,6 +101,7 @@ mihomo_txt_file="${group}_Mihomo.txt"
 mihomo_mrs_file="${mihomo_txt_file%.txt}.mrs"
 clash_file="${group}_clash.txt"
 adblock_file="${group}_adblock.txt"
+singbox_file="${group}_singbox.json"  # 新增: sing-box格式文件名
 
 # -----------------------------------------------------------------------------
 # 【步骤8】下载 Mihomo 工具（只下载一次，已存在则跳过）
@@ -184,7 +185,7 @@ done
 # 【步骤13】统计最终规则数量，排除空行与注释
 # -----------------------------------------------------------------------------
 rule_count=$(grep -vE '^\s*$|^#' "$domain_file" | wc -l)
-echo "[$(date '+%H:%M:%S')] 文件: $mihomo_txt_file, $mihomo_mrs_file"
+echo "[$(date '+%H:%M:%S')] 文件: $mihomo_txt_file, $mihomo_mrs_file, $singbox_file"  # 更新输出信息
 echo "[$(date '+%H:%M:%S')] 规则总数: $rule_count"
 
 # -----------------------------------------------------------------------------
@@ -200,22 +201,50 @@ if ! "./$MIHOMO_TOOL" convert-ruleset domain text "$mihomo_txt_file" "$mihomo_mr
 fi
 
 # -----------------------------------------------------------------------------
-# 【步骤16】生成 Clash 和 Adblock 格式
+# 【步骤16】生成 Clash、Adblock 和 Sing-box 格式
 # -----------------------------------------------------------------------------
+# 生成 Clash 格式
 awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "DOMAIN-SUFFIX,"$0}' "$domain_file" > "$clash_file"
+
+# 生成 Adblock 格式
 awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "||"$0"^"}' "$domain_file" > "$adblock_file"
+
+# 生成 sing-box 1.12.x json 格式
+{
+    echo "{"
+    echo "  \"version\": 3,"
+    echo "  \"rules\": ["
+    echo "    {"
+    echo "      \"domain_suffix\": ["
+    # 处理domain文件,生成json数组格式的域名列表
+    awk -v group="$group" '
+    BEGIN {first=1}
+    !/^(\s*$|#)/ {
+        gsub(/^[ \t]*/,"")
+        gsub(/[ \t]*$/,"")
+        if (!first) printf ",\n"
+        printf "        \"%s\"", $0
+        first=0
+    }' "$domain_file"
+    echo
+    echo "      ]"
+    echo "    }"
+    echo "  ]"
+    echo "}"
+} > "$singbox_file"
 
 # -----------------------------------------------------------------------------
 # 【步骤17】整理输出文件夹并清理临时文件
 # -----------------------------------------------------------------------------
 repo_root="$(cd ../.. && pwd)"
-mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock"
+mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock" "$repo_root/singbox"  # 添加singbox目录
 
 mv "$mihomo_txt_file" "$repo_root/txt/$mihomo_txt_file"
 mv "$mihomo_mrs_file" "$repo_root/mrs/$mihomo_mrs_file"
 mv "$domain_file" "$repo_root/domain/$domain_file"
 mv "$clash_file" "$repo_root/clash/$clash_file"
 mv "$adblock_file" "$repo_root/adblock/$adblock_file"
+mv "$singbox_file" "$repo_root/singbox/$singbox_file"  # 移动sing-box文件
 
 rm -f "${group}_tmp.txt"
 
