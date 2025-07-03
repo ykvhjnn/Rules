@@ -73,7 +73,7 @@ https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master
 declare -A py_scripts
 py_scripts["Proxy"]="collect.py clean.py remove-proxy.py"
 py_scripts["Directfix"]="collect.py clean.py"
-py_scripts["Ad"]="collect.py remove-ad.py clean.py"
+py_scripts["Ad"]="collect.py remove_domains_Ad.py clean.py"
 py_scripts["Direct"]="collect.py clean.py"
 
 # -----------------------------------------------------------------------------
