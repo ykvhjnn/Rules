@@ -71,9 +71,9 @@ https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master
 # 【步骤5】各组对应的 Python 清洗脚本列表（组名一一对应）
 # -----------------------------------------------------------------------------
 declare -A py_scripts
-py_scripts["Proxy"]="collect.py clean.py remove-proxy.py"
+py_scripts["Proxy"]="collect.py remove_domains_Proxy.py clean.py add_domains_Proxy.py"
 py_scripts["Directfix"]="collect.py clean.py"
-py_scripts["Ad"]="collect.py remove_domains_Ad.py clean.py"
+py_scripts["Ad"]="collect.py remove_domains_Ad.py clean.py add_domains_Ad.py"
 py_scripts["Direct"]="collect.py clean.py"
 
 # -----------------------------------------------------------------------------
@@ -276,7 +276,7 @@ fi
 # 【步骤18】整理输出文件夹并清理临时文件
 # -----------------------------------------------------------------------------
 repo_root="$(cd ../.. && pwd)"
-mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock" "$repo_root/singbox" "$repo_root/srs"
+mkdir -p "$repo_root/txt" "$repo_root/mrs" "$repo_root/domain" "$repo_root/clash" "$repo_root/adblock" "$repo_root/singbox" "$repo_root/srs" "$repo_root/.cache"
 
 mv "$mihomo_txt_file" "$repo_root/txt/$mihomo_txt_file"
 mv "$mihomo_mrs_file" "$repo_root/mrs/$mihomo_mrs_file"
