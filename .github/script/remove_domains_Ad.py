@@ -62,7 +62,7 @@ class ConfigManager:
         except Exception as e:
             log(f"保存缓存失败 {url}: {str(e)}")
 
-class AddRuleProcessor:
+class RemoveRuleProcessor:
     def __init__(self, config_urls: Dict[str, List[str]], max_workers: int = 5):
         self.config_urls = config_urls
         self.max_workers = max_workers
@@ -70,7 +70,10 @@ class AddRuleProcessor:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-        self.ADD_DOMAIN: Set[str] = set()
+        # 初始化移除规则集合
+        self.REMOVE_END: Set[str] = set()
+        self.REMOVE_DOMAIN: Set[str] = set()
+        self.REMOVE_KEYWORD: Set[str] = set()
 
     def fetch_url(self, url: str) -> Set[str]:
         cached_data = self.config_manager.load_from_cache(url)
@@ -99,20 +102,45 @@ class AddRuleProcessor:
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_url = {}
             
-            for url in self.config_urls.get("ADD_DOMAIN", []):
-                if url := url.strip():
+            for config_type, urls in self.config_urls.items():
+                valid_urls = self.config_manager.validate_urls(urls)
+                for url in valid_urls:
                     future = executor.submit(self.fetch_url, url)
-                    future_to_url[future] = url
+                    future_to_url[future] = (config_type, url)
             
             for future in as_completed(future_to_url):
-                url = future_to_url[future]
+                config_type, url = future_to_url[future]
                 try:
                     rules = future.result()
-                    self.ADD_DOMAIN.update(rules)
+                    if config_type == "REMOVE_END":
+                        self.REMOVE_END.update(rules)
+                    elif config_type == "REMOVE_DOMAIN":
+                        self.REMOVE_DOMAIN.update(rules)
+                    elif config_type == "REMOVE_KEYWORD":
+                        self.REMOVE_KEYWORD.update(rules)
                 except Exception as e:
                     log(f"处理配置失败 {url}: {str(e)}", major=True)
 
-        log(f"配置加载完成：ADD_DOMAIN: {len(self.ADD_DOMAIN)} 条", major=True)
+        log(f"配置加载完成：\n"
+            f"REMOVE_END: {len(self.REMOVE_END)} 条\n"
+            f"REMOVE_DOMAIN: {len(self.REMOVE_DOMAIN)} 条\n"
+            f"REMOVE_KEYWORD: {len(self.REMOVE_KEYWORD)} 条", major=True)
+
+    def should_keep(self, domain: str) -> bool:
+        if not domain or not isinstance(domain, str):
+            return False
+            
+        domain = domain.lower().strip()
+        
+        # 黑名单检查
+        if domain in self.REMOVE_DOMAIN:
+            return False
+        if any(keyword in domain for keyword in self.REMOVE_KEYWORD):
+            return False
+        if any(domain.endswith(suffix) for suffix in self.REMOVE_END):
+            return False
+            
+        return True
 
     def process_file(self, input_file: str):
         if not os.path.exists(input_file):
@@ -128,13 +156,7 @@ class AddRuleProcessor:
             with open(input_file, "r", encoding="utf-8") as fin, \
                  open(temp_file, "w", encoding="utf-8") as fout:
 
-                # 首先写入所有要添加的域名
-                for domain in sorted(self.ADD_DOMAIN):
-                    fout.write(f"{domain}\n")
-                    kept_count += 1
-
-                # 然后写入原文件中的域名（去重）
-                seen_domains = set(self.ADD_DOMAIN)
+                seen_domains = set()  # 用于去重
                 for line in fin:
                     line_count += 1
                     domain = line.strip()
@@ -142,9 +164,10 @@ class AddRuleProcessor:
                     if not domain or domain.startswith("#") or domain in seen_domains:
                         continue
 
-                    seen_domains.add(domain)
-                    fout.write(f"{domain}\n")
-                    kept_count += 1
+                    if self.should_keep(domain):
+                        seen_domains.add(domain)
+                        fout.write(f"{domain}\n")
+                        kept_count += 1
 
                     if line_count % 100000 == 0:
                         log(f"已处理 {line_count} 行, 保留 {kept_count} 条规则")
@@ -168,15 +191,17 @@ def log(event: str, major: bool = False):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python add_domains.py <filename>")
+        print("Usage: python remove_domains.py <filename>")
         sys.exit(1)
 
     config_urls = {
-        "ADD_DOMAIN": ["https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Ad.txt"]       # 添加ADD_DOMAIN配置链接
+        "REMOVE_END": ["https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/REMOVE_END_Country.txt"],      # 添加REMOVE_END配置链接
+        "REMOVE_DOMAIN": ["https://raw.githubusercontent.com/217heidai/adblockfilters/refs/heads/main/rules/white.txt", "https://raw.githubusercontent.com/217heidai/adblockfilters/refs/heads/main/rules/white.txt", "https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/REMOVE_DOMAIN_Ad.txt", "https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/share/dead.list-aa"],   # 添加REMOVE_DOMAIN配置链接
+        "REMOVE_KEYWORD": [],  # 添加REMOVE_KEYWORD配置链接
     }
 
     try:
-        processor = AddRuleProcessor(config_urls)
+        processor = RemoveRuleProcessor(config_urls)
         processor.load_configurations()
         processor.process_file(sys.argv[1])
     except KeyboardInterrupt:
