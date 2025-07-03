@@ -54,14 +54,11 @@ urls_map["Ad"]="
 https://raw.githubusercontent.com/ghvjjjj/adblockfilters/refs/heads/main/rules/adblockdomain.txt
 https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdomainlite.txt
 https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-adguard.txt
-https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/dns.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.xiaomi.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.oppo-realme.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.vivo.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.tiktok.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.samsung.txt
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.winoffice.txt
-https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.apple.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.huawei.txt
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Ad.txt
 "
