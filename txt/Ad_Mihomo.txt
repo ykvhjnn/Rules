@@ -819,7 +819,6 @@
 +.nex.corp.163.com
 +.crash.163.com
 +.crashlytics.163.com
-+.ac.dun.163.com
 +.fp-upload.dun.163.com
 +.e-p4p.163.com
 +.fa.163.com
@@ -925,7 +924,7 @@
 +.17mmc5g1n.com
 +.17tahun.com
 +.sycnzz.17tanwan.com
-+.17u.cn
++.vstlog.17u.cn
 +.17un.com
 +.e.17w3a.cn
 +.m.17w3a.cn
@@ -10759,9 +10758,6 @@
 +.zen-core-sg.allawnos.com
 +.zen-core-us.allawnos.com
 +.conn-service-cn-01.allawntech.com
-+.conn-service-cn-03.allawntech.com
-+.conn-service-cn-04.allawntech.com
-+.conn-service-cn-05.allawntech.com
 +.conn-service-cn-07.allawntech.com
 +.conn-service-cn-08.allawntech.com
 +.conn-service-gl-01.allawntech.com
@@ -16996,7 +16992,6 @@
 +.dl2.bav.baidu.com
 +.download.bav.baidu.com
 +.idm.bce.baidu.com
-+.nj.t.bcsp2p.baidu.com
 +.bdplus.baidu.com
 +.click.bes.baidu.com
 +.bes-mtj.baidu.com
@@ -17106,7 +17101,6 @@
 +.nadvideo2.baidu.com
 +.neirong.baidu.com
 +.nlog.baidu.com
-+.nsclick.baidu.com
 +.nsclickvideo.baidu.com
 +.openrcv.baidu.com
 +.dl.ops.baidu.com
@@ -18217,11 +18211,9 @@
 +.a.bdsmz.tube
 +.ae.bdstatic.com
 +.mipcache.bdstatic.com
-+.ms.bdstatic.com
 +.sofire.bdstatic.com
 +.su.bdstatic.com
 +.zz.bdstatic.com
-+.dig.bdurl.net
 +.bdvempresasdumop.shop
 +.bdvempresasebufu.shop
 +.bdx-adguard.pro
@@ -30602,11 +30594,6 @@
 +.act.colorlines.com
 +.news.colormagazine.com
 +.apps.coloros.com
-+.conn1.coloros.com
-+.conn2.coloros.com
-+.conn3.coloros.com
-+.conn4.coloros.com
-+.conn5.coloros.com
 +.foreign.coloros.com
 +.guif.coloros.com
 +.guif-eu.coloros.com
@@ -38442,7 +38429,6 @@
 +.douaneups-lu.com
 +.douanierfrais.com
 +.douaoocmkytcg.site
-+.erebor.douban.com
 +.push.douban.com
 +.ad.doubanio.com
 +.at1.doubanio.com
@@ -39328,7 +39314,6 @@
 +.analytics.dugun.com
 +.ads.dugwood.com
 +.pixel.dugwood.com
-+.dui88.com
 +.m.duias.com
 +.duigore.com
 +.sdk.duihuashijie.com
@@ -54486,7 +54471,6 @@
 +.hahusa.top
 +.gg.haianw.com
 +.hats.haibao.cn
-+.net.haier.com
 +.haierwd.com
 +.haig7anax.com
 +.haigrigo.com
@@ -64354,7 +64338,6 @@
 +.addata.jd.com
 +.ads-union.jd.com
 +.c-nfa.jd.com
-+.ccc-x.jd.com
 +.chat1.jd.com
 +.union.click.jd.com
 +.cm.jd.com
@@ -64371,7 +64354,6 @@
 +.jrclick.jd.com
 +.jzt.jd.com
 +.kepler.jd.com
-+.knicks.jd.com
 +.log.jd.com
 +.blackhole.m.jd.com
 +.blackhole-m.m.jd.com
@@ -76437,7 +76419,6 @@
 +.meitustat.com
 +.meizhiye-live.com
 +.meizhiye-live.net
-+.aider-res.meizu.com
 +.api-flow.meizu.com
 +.api-game.meizu.com
 +.api-push.meizu.com
@@ -78006,7 +77987,6 @@
 +.app.miui.com
 +.api.bbs.miui.com
 +.browser.miui.com
-+.api.comm.miui.com
 +.tracking.eu.miui.com
 +.events.miui.com
 +.feedback.miui.com
@@ -78105,9 +78085,7 @@
 +.jupiter.sys.miui.com
 +.metok.sys.miui.com
 +.jupiter.rus.sys.miui.com
-+.testit.miui.com
 +.tracking.miui.com
-+.api.vip.miui.com
 +.api.xk.miui.com
 +.fb.xk.miui.com
 +.intl.up.w.xk.miui.com
@@ -86848,7 +86826,7 @@
 +.onetag.com
 +.onetag-sys.com
 +.magpie.onething.org
-+.onethingpcs.com
++.natdetection.onethingpcs.com
 +.sstats.onetime.com
 +.stats.onetime.com
 +.onetime-office-license-gb-en-7140516.live
@@ -92414,7 +92392,6 @@
 +.pkok03.com
 +.pkok07.com
 +.pkok09.com
-+.pkoplink.com
 +.pkoqeg.com
 +.pkrchp001.com
 +.pkrdxx.club
@@ -97522,7 +97499,8 @@
 +.detect.mb.qq.com
 +.dnet.mb.qq.com
 +.pms.mb.qq.com
-+.mdt.qq.com
++.oth.eve.mdt.qq.com
++.oth.str.mdt.qq.com
 +.mini2015.qq.com
 +.log.node.minigame.qq.com
 +.monitor.qq.com
@@ -100795,7 +100773,6 @@
 +.revalthorin.com
 +.revampcdn.com
 +.revanced.art
-+.revanced.net
 +.revanced.org
 +.revanced-extended.com
 +.www.revancedapp.download
@@ -105580,7 +105557,7 @@
 +.sentry-build-laravel.sentry.dev
 +.sentry-docs-git-patch-1.sentry.dev
 +.sentry-docs-nc8v0r313.sentry.dev
-+.sentry.io
++.ingest.sentry.io
 +.sentry-cdn.top
 +.owl.sentrydiscord.dev
 +.sentrymagic.com
@@ -108733,7 +108710,6 @@
 +.smuwroli.com
 +.smwaba.click
 +.smyvuljawh.com
-+.analytics-api.smzdm.com
 +.res-ga.smzdm.com
 +.sn-gzzx.com
 +.sn2rrlv57qpss5w-qk8llu.xyz
@@ -109244,7 +109220,8 @@
 +.epro.sohu.com
 +.fpb.sohu.com
 +.fpb0.sohu.com
-+.go.sohu.com
++.imp.go.sohu.com
++.xls.go.sohu.com
 +.golden1.sohu.com
 +.aty.hd.sohu.com
 +.bd.hd.sohu.com
@@ -126459,7 +126436,6 @@
 +.volatintptr.com
 +.volcaearmoric.shop
 +.volcangames.com
-+.lf3-data.volccdn.com
 +.volceapplog.com
 +.httpdns.volcengineapi.com
 +.apmplus.ap-southeast-1.volces.com
@@ -131689,7 +131665,6 @@
 +.ad.xiaomi.com
 +.ad1.xiaomi.com
 +.api.ads.xiaomi.com
-+.tracker.ai.xiaomi.com
 +.tracker-preview.ai.xiaomi.com
 +.bigdata-lbs-pri-c3.alb.xiaomi.com
 +.global-ad-extranet-pri-azams.alb.xiaomi.com
@@ -131697,12 +131672,10 @@
 +.global-ad-intl-pri-alisgp.alb.xiaomi.com
 +.awssgp0-files.fds.api.xiaomi.com
 +.cdn.fds.api.xiaomi.com
-+.cnbj1.fds.api.xiaomi.com
 +.awsusor0-cdn.fds-ssl.api.xiaomi.com
 +.cdn.fds-ssl.api.xiaomi.com
 +.mibi.api.xiaomi.com
 +.o2o.api.xiaomi.com
-+.a0.app.xiaomi.com
 +.t.app.xiaomi.com
 +.shoes.app-xae.xiaomi.com
 +.mon.be.xiaomi.com
@@ -131711,7 +131684,6 @@
 +.package.box.xiaomi.com
 +.bgp.fe01.c3.xiaomi.com
 +.d.xiaomi.com
-+.api.developer.xiaomi.com
 +.extranet.c3.miui-l7-feedback.1irknwwveg.elb.xiaomi.com
 +.extranet.c3.feedback.2ddfrkx42q.elb.xiaomi.com
 +.extranet.eu-east-1.miui-l7-feedback.c7qiwffdmn.elb.xiaomi.com
@@ -131751,7 +131723,6 @@
 +.activity.hybrid.xiaomi.com
 +.api.hybrid.xiaomi.com
 +.ad.quickapp.hybrid.xiaomi.com
-+.i.xiaomi.com
 +.pi.ias.xiaomi.com
 +.sdkconfig.ad.india.xiaomi.com
 +.controller.india.xiaomi.com
@@ -131768,20 +131739,13 @@
 +.ru.video.intl.xiaomi.com
 +.secure.report.iss.xiaomi.com
 +.fe02.lg.xiaomi.com
-+.a.market.xiaomi.com
++.t1.a.market.xiaomi.com
 +.drm.market.xiaomi.com
 +.xadx.file.market.xiaomi.com
-+.t1.market.xiaomi.com
 +.t15.market.xiaomi.com
 +.t17.market.xiaomi.com
-+.t2.market.xiaomi.com
-+.t3.market.xiaomi.com
-+.t4.market.xiaomi.com
-+.t5.market.xiaomi.com
 +.t7.market.xiaomi.com
-+.thm.market.xiaomi.com
 +.video.market.xiaomi.com
-+.wtradv.market.xiaomi.com
 +.resolver.mi.xiaomi.com
 +.mibi.xiaomi.com
 +.tv.app.migc.xiaomi.com
@@ -131902,8 +131866,9 @@
 +.us.api.micloud.xiaomi.net
 +.findapi.micloud.xiaomi.net
 +.api.g.micloud.xiaomi.net
-+.galleryapi.micloud.xiaomi.net
-+.statusapi.micloud.xiaomi.net
++.eu.statusapi.micloud.xiaomi.net
++.in.statusapi.micloud.xiaomi.net
++.us.statusapi.micloud.xiaomi.net
 +.invoice.netroam.mihome.xiaomi.net
 +.resolver.msg.xiaomi.net
 +.api.account.preview.n.xiaomi.net
@@ -133521,9 +133486,6 @@
 +.yhak0o7rtz.com
 +.yhbcii.com
 +.yhbsk.cn
-+.click.yhd.com
-+.api.dsp.yhd.com
-+.tracker.yhd.com
 +.yhdd1.com
 +.yhgfsdad.top
 +.yhgio.com
@@ -133692,7 +133654,6 @@
 +.yiyi6.shop
 +.yiyilm.com
 +.analytics.yiyouliao.com
-+.img-nos.yiyouliao.com
 +.wr.yiyouliao.com
 +.yiyoutiyu.com
 +.a.yiyuancq.com
@@ -134014,7 +133975,6 @@
 +.gorgon.youdao.com
 +.impservice.youdao.com
 +.intervista.youdao.com
-+.rlogs.youdao.com
 +.sdk-log-inter.youdao.com
 +.union.youdao.com
 +.ydpushserver.youdao.com
@@ -134459,7 +134419,6 @@
 +.yuan-ke.com
 +.yuanchengxiezuo.com
 +.m.yuandajiayuan.com
-+.frog.yuanfudao.com
 +.yuanlin15.cn
 +.yuanprofit.org
 +.overseauspider.yuanshen.com
@@ -136353,7 +136312,6 @@
 +.ztdbfz.top
 +.ztdog.com
 +.images.mkt.zte.com.cn
-+.ztgame.com
 +.ztgha.xyz
 +.zticn.com
 +.ztjxmnajfduht.life
