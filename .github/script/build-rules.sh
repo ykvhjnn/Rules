@@ -3,7 +3,7 @@
 # 规则生成脚本 v3.0
 # 作者：ykvhjnn
 # 创建日期：2025-07-04
-# 最后更新：2025-07-04 11:46:18
+# 最后更新：2025-07-04 12:06:12
 # 
 # 功能：生成各种格式的分流规则，支持域名和IP规则
 # 支持格式：
@@ -35,6 +35,18 @@ PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
 # 工具相关常量
 MIHOMO_TOOL="mihomo"
 SINGBOX_TOOL="sing-box"
+
+# 输出目录
+OUTPUT_DIRS=(
+    "txt"
+    "mrs"
+    "domain"
+    "ip"
+    "clash"
+    "adblock"
+    "singbox"
+    "srs"
+)
 
 # 描述模板
 DESCRIPTION_TEMPLATE="# ============================================
@@ -76,13 +88,22 @@ cleanup() {
     if [[ $exit_code -ne 0 ]]; then
         log_error "脚本执行失败，退出码: ${exit_code}"
     fi
-    exit $exit_code
 }
 
 # 错误处理函数
 error_exit() {
     log_error "$1"
+    cleanup
     exit 1
+}
+
+# 检查并创建目录
+check_and_create_dir() {
+    local dir="$1"
+    if [[ ! -d "$dir" ]]; then
+        mkdir -p "$dir" || error_exit "无法创建目录: $dir"
+        log_info "创建目录: $dir"
+    fi
 }
 
 # 添加描述信息到文件
@@ -129,28 +150,39 @@ check_dependencies() {
     fi
 }
 
+# 检查Python脚本
+check_python_scripts() {
+    local group="$1"
+    
+    # 检查Python脚本目录是否存在
+    if [[ ! -d "$PYTHON_SCRIPTS_DIR" ]]; then
+        error_exit "Python脚本目录不存在: $PYTHON_SCRIPTS_DIR"
+    fi
+    
+    # 检查所需的Python脚本
+    local required_scripts="${py_scripts[$group]}"
+    for script in $required_scripts; do
+        if [[ ! -f "${PYTHON_SCRIPTS_DIR}/${script}" ]]; then
+            error_exit "缺少必要的Python脚本: ${script}"
+        fi
+    done
+}
+
 # 创建目录
 create_directories() {
     log_info "创建必要的目录..."
     
     # 创建临时目录
-    mkdir -p "${TEMP_DIR}" "${TOOLS_DIR}"
+    check_and_create_dir "${TEMP_DIR}"
+    check_and_create_dir "${TOOLS_DIR}"
     
     # 创建输出目录
-    local dirs=(
-        "txt"
-        "mrs"
-        "domain"
-        "ip"
-        "clash"
-        "adblock"
-        "singbox"
-        "srs"
-    )
-    
-    for dir in "${dirs[@]}"; do
-        mkdir -p "${REPO_ROOT}/${dir}"
+    for dir in "${OUTPUT_DIRS[@]}"; do
+        check_and_create_dir "${REPO_ROOT}/${dir}"
     done
+    
+    # 检查Python脚本目录
+    check_and_create_dir "${PYTHON_SCRIPTS_DIR}"
 }
 
 # =============================================================================
@@ -169,7 +201,7 @@ download_mihomo() {
     log_info "开始下载 Mihomo 工具..."
     
     local tmp_dir="${TEMP_DIR}/mihomo_tmp_$$"
-    mkdir -p "$tmp_dir"
+    check_and_create_dir "$tmp_dir"
     
     local version_file="${tmp_dir}/version.txt"
     if ! wget -q "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt" \
@@ -230,7 +262,7 @@ download_singbox() {
     log_info "开始下载 sing-box 工具..."
     
     local tmp_dir="${TEMP_DIR}/singbox_tmp_$$"
-    mkdir -p "$tmp_dir"
+    check_and_create_dir "$tmp_dir"
     
     local latest_version
     latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | \
@@ -249,34 +281,39 @@ download_singbox() {
         error_exit "下载 sing-box 工具失败"
     fi
     
+    local current_dir="$PWD"
     cd "$tmp_dir" || {
         rm -rf "$tmp_dir"
         error_exit "切换到临时目录失败"
     }
     
     if ! tar xzf "$archive_name"; then
+        cd "$current_dir" || true
         rm -rf "$tmp_dir"
         error_exit "解压 sing-box 工具失败"
     fi
     
     local extracted_dir="sing-box-${latest_version}-linux-amd64"
     if [[ ! -f "${extracted_dir}/sing-box" ]]; then
+        cd "$current_dir" || true
         rm -rf "$tmp_dir"
         error_exit "sing-box 工具文件不存在"
     fi
     
     mv "${extracted_dir}/sing-box" "$tool_path" || {
+        cd "$current_dir" || true
         rm -rf "$tmp_dir"
         error_exit "移动 sing-box 工具失败"
     }
     
     chmod +x "$tool_path" || {
+        cd "$current_dir" || true
         rm -rf "$tmp_dir"
         error_exit "设置 sing-box 工具执行权限失败"
     }
     
+    cd "$current_dir" || log_warn "返回原始目录失败"
     rm -rf "$tmp_dir"
-    cd "$SCRIPT_DIR" || error_exit "返回脚本目录失败"
     log_info "sing-box 工具安装完成"
 }
 
@@ -345,45 +382,54 @@ download_rules() {
     log_info "开始下载 ${group} 规则..."
     
     # 处理域名规则
+    local max_concurrent=8
+    local current_jobs=0
+    
+    download_url() {
+        local url="$1"
+        local output="$2"
+        local type="$3"
+        
+        local temp_file="${TEMP_DIR}/${type}_${RANDOM}.tmp"
+        if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" > "$temp_file"; then
+            log_info "成功下载${type}规则: $url"
+            cat "$temp_file" >> "$output"
+        else
+            log_warn "下载${type}规则失败: $url"
+        fi
+        rm -f "$temp_file"
+    }
+    
+    # 下载域名规则
     while IFS= read -r url; do
         [[ -z "$url" ]] && continue
-        {
-            local out="${TEMP_DIR}/domain_${RANDOM}.tmp"
-            if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" > "$out"; then
-                log_info "成功下载域名规则: $url"
-                cat "$out" >> "$domain_file"
-            else
-                log_warn "下载域名规则失败: $url"
-            fi
-            rm -f "$out"
-        } &
-        if [[ $(jobs -rp | wc -l) -ge 8 ]]; then
+        ((current_jobs++))
+        download_url "$url" "$domain_file" "域名" &
+        
+        if ((current_jobs >= max_concurrent)); then
             wait -n
+            ((current_jobs--))
         fi
     done <<< "${urls_map[$group]}"
-    wait
     
-    # 处理IP规则
+    # 下载IP规则
     if [[ -n "${ip_urls_map[$group]:-}" ]]; then
         while IFS= read -r url; do
             [[ -z "$url" ]] && continue
-            {
-                local out="${TEMP_DIR}/ip_${RANDOM}.tmp"
-                if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" > "$out"; then
-                    log_info "成功下载IP规则: $url"
-                    cat "$out" >> "$ip_file"
-                else
-                    log_warn "下载IP规则失败: $url"
-                fi
-                rm -f "$out"
-            } &
-            if [[ $(jobs -rp | wc -l) -ge 8 ]]; then
+            ((current_jobs++))
+            download_url "$url" "$ip_file" "IP" &
+            
+            if ((current_jobs >= max_concurrent)); then
                 wait -n
+                ((current_jobs--))
             fi
         done <<< "${ip_urls_map[$group]}"
-        wait
     fi
+    
+    # 等待所有下载完成
+    wait
 }
+
 # 处理规则
 process_rules() {
     local group="$1"
@@ -395,14 +441,16 @@ process_rules() {
     # 转换行尾
     sed -i 's/\r//' "$domain_file" "$ip_file"
     
+    # 检查Python脚本
+    check_python_scripts "$group"
+    
     # 执行Python清洗脚本
-    cd "$PYTHON_SCRIPTS_DIR" || error_exit "无法进入Python脚本目录"
-    for py in ${py_scripts[$group]}; do
-        [[ ! -f "$py" ]] && error_exit "找不到Python脚本: $py"
-        log_info "执行脚本: $py"
-        python3 "$py" "$domain_file" || error_exit "Python脚本 $py 执行失败"
+    for script in ${py_scripts[$group]}; do
+        log_info "执行脚本: $script"
+        if ! python3 "${PYTHON_SCRIPTS_DIR}/${script}" "$domain_file"; then
+            error_exit "Python脚本 $script 执行失败"
+        fi
     done
-    cd "$SCRIPT_DIR" || error_exit "返回脚本目录失败"
     
     # 统计规则数量
     local domain_count
@@ -548,6 +596,9 @@ generate_rules() {
 # 主函数
 # =============================================================================
 main() {
+    local start_time
+    start_time=$(date +%s)
+    
     # 参数检查
     if [[ $# -ne 1 ]]; then
         echo "用法: $0 [组名]"
@@ -578,6 +629,9 @@ main() {
     # 创建目录
     create_directories
     
+    # 检查Python脚本
+    check_python_scripts "$group"
+    
     # 下载工具
     download_mihomo
     download_singbox
@@ -598,7 +652,13 @@ main() {
     # 生成规则文件
     generate_rules "$group" "$domain_file" "$ip_file" "$counts"
     
-    log_info "[完成] $group 规则生成并清理完毕"
+    # 计算执行时间
+    local end_time
+    end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    log_info "[完成] $group 规则生成完毕"
+    log_info "执行时间: ${duration} 秒"
 }
 
 # 执行主程序
