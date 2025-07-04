@@ -34,7 +34,7 @@ PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
 
 # 工具相关常量
 MIHOMO_TOOL=".mihomo_tool"
-SINGBOX_TOOL=".sing-box_tool"
+SINGBOX_TOOL=".singbox_tool"
 
 # 输出目录
 OUTPUT_DIRS=(
