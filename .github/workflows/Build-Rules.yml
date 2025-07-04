@@ -21,11 +21,9 @@ jobs:
       # 并行构建规则
       - name: Build All Rules
         run: |
-          for type in Ad Proxy Directfix; do
-            bash .github/script/build-rules.sh $type &
-          done
-          wait
-
+          bash .github/script/build-rules.sh Ad
+          bash .github/script/build-rules.sh Proxy
+          bash .github/script/build-rules.sh Directfix
       # 自动提交并推送
       - name: Commit & Push Changes
         uses: stefanzweifel/git-auto-commit-action@v4
