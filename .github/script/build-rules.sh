@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# 规则生成脚本 v2.0
+# 规则生成脚本 v3.0
 # 作者：ykvhjnn
 # 功能：生成各种格式的分流规则，支持域名和IP规则
 # 支持格式：Mihomo(mrs)、Clash、Adblock、sing-box(srs)
@@ -12,10 +12,12 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # 常量定义
 # -----------------------------------------------------------------------------
-readonly SCRIPT_VERSION="2.0"
+readonly SCRIPT_VERSION="3.0"
 readonly SCRIPT_DATE="2025-07-04"
 readonly MIHOMO_TOOL=".mihomo_tool"
 readonly SINGBOX_TOOL=".singbox_tool"
+readonly TEMP_DIR="/tmp/rules_build"
+readonly TOOLS_DIR="$TEMP_DIR/tools"
 readonly DESCRIPTION_TEMPLATE="# ============================================
 # 名称：%s Rules
 # 类型：%s
@@ -30,6 +32,7 @@ readonly DESCRIPTION_TEMPLATE="# ============================================
 # -----------------------------------------------------------------------------
 function error_exit() {
     echo "[$(date '+%H:%M:%S')] [ERROR] $1" >&2
+    cleanup
     exit 1
 }
 
@@ -47,50 +50,70 @@ function add_description() {
     local type="$3"
     local count="$4"
     local timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
-    printf "$DESCRIPTION_TEMPLATE" "$group" "$type" "$count" "$timestamp" | cat - "$file" > temp && mv temp "$file"
+    local temp_file="$TEMP_DIR/desc_temp_$$"
+    printf "$DESCRIPTION_TEMPLATE" "$group" "$type" "$count" "$timestamp" | cat - "$file" > "$temp_file" && mv "$temp_file" "$file"
+}
+
+function cleanup() {
+    log_info "清理临时文件..."
+    rm -rf "$TEMP_DIR"
 }
 
 # -----------------------------------------------------------------------------
 # 工具下载函数
 # -----------------------------------------------------------------------------
 function download_mihomo() {
-    if [[ -f "$MIHOMO_TOOL" && -x "$MIHOMO_TOOL" ]]; then
+    local tool_path="$TOOLS_DIR/$MIHOMO_TOOL"
+    if [[ -f "$tool_path" && -x "$tool_path" ]]; then
         log_info "Mihomo 工具已存在，跳过下载"
         return
     fi
+    
+    mkdir -p "$TOOLS_DIR"
     log_info "开始下载 Mihomo 工具..."
-    wget -q https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt \
+    
+    local version_file="$TEMP_DIR/version.txt"
+    wget -q https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt -O "$version_file" \
         || error_exit "下载 Mihomo 版本文件失败"
-    version=$(cat version.txt)
-    tool_name="mihomo-linux-amd64-$version"
-    wget -q "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/$tool_name.gz" \
+    
+    local version=$(cat "$version_file")
+    local tool_name="mihomo-linux-amd64-$version"
+    wget -q "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/$tool_name.gz" -O "$TEMP_DIR/$tool_name.gz" \
         || error_exit "下载 Mihomo 工具失败"
-    gzip -d "$tool_name.gz" || error_exit "解压 Mihomo 工具失败"
-    chmod +x "$tool_name" || error_exit "赋予 Mihomo 工具可执行权限失败"
-    mv "$tool_name" "$MIHOMO_TOOL"
-    rm -f version.txt
+    
+    gzip -d "$TEMP_DIR/$tool_name.gz" || error_exit "解压 Mihomo 工具失败"
+    chmod +x "$TEMP_DIR/$tool_name" || error_exit "赋予 Mihomo 工具可执行权限失败"
+    mv "$TEMP_DIR/$tool_name" "$tool_path"
+    rm -f "$version_file"
 }
 
 function download_singbox() {
-    if [[ -f "$SINGBOX_TOOL" && -x "$SINGBOX_TOOL" ]]; then
+    local tool_path="$TOOLS_DIR/$SINGBOX_TOOL"
+    if [[ -f "$tool_path" && -x "$tool_path" ]]; then
         log_info "sing-box 工具已存在，跳过下载"
         return
-    fi
+    }
+    
+    mkdir -p "$TOOLS_DIR"
     log_info "开始下载 sing-box 工具..."
-    latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
+    
+    local latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
     [[ -z "$latest_version" ]] && error_exit "获取 sing-box 版本失败"
     
-    wget -q "https://github.com/SagerNet/sing-box/releases/download/${latest_version}/sing-box-${latest_version#v}-linux-amd64.tar.gz" \
+    local archive_name="sing-box-${latest_version#v}-linux-amd64.tar.gz"
+    local temp_archive="$TEMP_DIR/$archive_name"
+    local temp_extract_dir="$TEMP_DIR/sing-box-${latest_version#v}-linux-amd64"
+    
+    wget -q "https://github.com/SagerNet/sing-box/releases/download/${latest_version}/$archive_name" -O "$temp_archive" \
         || error_exit "下载 sing-box 工具失败"
     
-    tar xzf "sing-box-${latest_version#v}-linux-amd64.tar.gz" \
+    tar xzf "$temp_archive" -C "$TEMP_DIR" \
         || error_exit "解压 sing-box 工具失败"
     
-    mv "sing-box-${latest_version#v}-linux-amd64/sing-box" "$SINGBOX_TOOL" \
+    mv "$temp_extract_dir/sing-box" "$tool_path" \
         || error_exit "移动 sing-box 工具失败"
     
-    chmod +x "$SINGBOX_TOOL" || error_exit "赋予 sing-box 工具可执行权限失败"
-    rm -rf "sing-box-${latest_version#v}-linux-amd64" "sing-box-${latest_version#v}-linux-amd64.tar.gz"
+    chmod +x "$tool_path" || error_exit "赋予 sing-box 工具可执行权限失败"
 }
 
 # -----------------------------------------------------------------------------
@@ -158,20 +181,27 @@ if [[ -z "${urls_map[$group]:-}" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 文件名定义
+# 初始化
 # -----------------------------------------------------------------------------
-domain_file="${group}_domain.txt"
-ip_file="${group}_ip.txt"
-tmp_file="${group}_tmp.txt"
-ip_tmp_file="${group}_ip_tmp.txt"
-mihomo_txt_file="${group}_Mihomo.txt"
+# 创建临时目录
+mkdir -p "$TEMP_DIR"
+trap cleanup EXIT
+
+# 初始化文件路径
+domain_file="$TEMP_DIR/${group}_domain.txt"
+ip_file="$TEMP_DIR/${group}_ip.txt"
+mihomo_txt_file="$TEMP_DIR/${group}_Mihomo.txt"
 mihomo_mrs_file="${mihomo_txt_file%.txt}.mrs"
-mihomo_ip_txt_file="${group}_Mihomo_ip.txt"
+mihomo_ip_txt_file="$TEMP_DIR/${group}_Mihomo_ip.txt"
 mihomo_ip_mrs_file="${mihomo_ip_txt_file%.txt}.mrs"
-clash_file="${group}_clash.txt"
-adblock_file="${group}_adblock.txt"
-singbox_file="${group}_singbox.json"
+clash_file="$TEMP_DIR/${group}_clash.txt"
+adblock_file="$TEMP_DIR/${group}_adblock.txt"
+singbox_file="$TEMP_DIR/${group}_singbox.json"
 singbox_srs_file="${group}_singbox.srs"
+
+# 初始化文件
+> "$domain_file"
+> "$ip_file"
 
 # -----------------------------------------------------------------------------
 # 工具准备
@@ -179,14 +209,6 @@ singbox_srs_file="${group}_singbox.srs"
 cd "$(cd "$(dirname "$0")"; pwd)" || error_exit "无法进入脚本目录"
 download_mihomo
 download_singbox
-
-# -----------------------------------------------------------------------------
-# 清理临时文件
-# -----------------------------------------------------------------------------
-> "$domain_file"
-> "$tmp_file"
-> "$ip_file"
-> "$ip_tmp_file"
 
 # -----------------------------------------------------------------------------
 # 下载规则源
@@ -201,12 +223,14 @@ done <<< "${urls_map[$group]}"
 
 for url in "${urls_list[@]}"; do
     {
-        out="${tmp_file}_$RANDOM"
-        if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" >> "$out"; then
+        out="$TEMP_DIR/domain_${RANDOM}.tmp"
+        if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" > "$out"; then
             log_info "拉取域名规则成功: $url"
+            cat "$out" >> "$domain_file"
         else
             log_warn "拉取域名规则失败: $url"
         fi
+        rm -f "$out"
     } &
     if [[ $(jobs -rp | wc -l) -ge 8 ]]; then
         wait -n
@@ -223,12 +247,14 @@ if [[ -n "${ip_urls_map[$group]:-}" ]]; then
 
     for url in "${ip_urls_list[@]}"; do
         {
-            out="${ip_tmp_file}_$RANDOM"
-            if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" >> "$out"; then
+            out="$TEMP_DIR/ip_${RANDOM}.tmp"
+            if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" > "$out"; then
                 log_info "拉取IP规则成功: $url"
+                cat "$out" >> "$ip_file"
             else
                 log_warn "拉取IP规则失败: $url"
             fi
+            rm -f "$out"
         } &
         if [[ $(jobs -rp | wc -l) -ge 8 ]]; then
             wait -n
@@ -237,18 +263,9 @@ if [[ -n "${ip_urls_map[$group]:-}" ]]; then
     wait
 fi
 
-cat "${tmp_file}"_* >> "$tmp_file" 2>/dev/null || true
-cat "${ip_tmp_file}"_* >> "$ip_tmp_file" 2>/dev/null || true
-rm -f "${tmp_file}"_* "${ip_tmp_file}"_*
-
-log_info "规则源全部下载合并完成"
-
 # -----------------------------------------------------------------------------
 # 规则处理
 # -----------------------------------------------------------------------------
-cat "$tmp_file" >> "$domain_file"
-cat "$ip_tmp_file" >> "$ip_file"
-rm -f "$tmp_file" "$ip_tmp_file"
 sed -i 's/\r//' "$domain_file" "$ip_file"
 
 # 执行Python清洗脚本
@@ -268,23 +285,23 @@ log_info "IP规则数量: $ip_count"
 # 规则转换
 # -----------------------------------------------------------------------------
 # 域名规则处理
-sed "s/^/\+\./g" "$domain_file" > "$mihomo_txt_file"
-add_description "$mihomo_txt_file" "$group" "Domain" "$domain_count"
+if [[ $domain_count -gt 0 ]]; then
+    sed "s/^/\+\./g" "$domain_file" > "$mihomo_txt_file"
+    add_description "$mihomo_txt_file" "$group" "Domain" "$domain_count"
+
+    # 转换域名规则
+    if ! "$TOOLS_DIR/$MIHOMO_TOOL" convert-ruleset domain text "$mihomo_txt_file" "$mihomo_mrs_file"; then
+        error_exit "Mihomo 工具转换域名规则失败"
+    fi
+fi
 
 # IP规则处理
 if [[ -s "$ip_file" ]]; then
     grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?$' "$ip_file" > "$mihomo_ip_txt_file"
     add_description "$mihomo_ip_txt_file" "$group" "IP-CIDR" "$ip_count"
-fi
 
-# 转换域名规则
-if ! "./$MIHOMO_TOOL" convert-ruleset domain text "$mihomo_txt_file" "$mihomo_mrs_file"; then
-    error_exit "Mihomo 工具转换域名规则失败"
-fi
-
-# 转换IP规则
-if [[ -s "$mihomo_ip_txt_file" ]]; then
-    if ! "./$MIHOMO_TOOL" convert-ruleset ipcidr text "$mihomo_ip_txt_file" "$mihomo_ip_mrs_file"; then
+    # 转换IP规则
+    if ! "$TOOLS_DIR/$MIHOMO_TOOL" convert-ruleset ipcidr text "$mihomo_ip_txt_file" "$mihomo_ip_mrs_file"; then
         error_exit "Mihomo 工具转换IP规则失败"
     fi
 fi
@@ -295,17 +312,21 @@ fi
 # Clash格式
 {
     printf "$DESCRIPTION_TEMPLATE" "$group" "Clash" "$((domain_count + ip_count))" "$(date '+%Y-%m-%d %H:%M:%S')"
-    awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "DOMAIN-SUFFIX,"$0}' "$domain_file"
+    if [[ $domain_count -gt 0 ]]; then
+        awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "DOMAIN-SUFFIX,"$0}' "$domain_file"
+    fi
     if [[ -s "$ip_file" ]]; then
         awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "IP-CIDR,"$0}' "$ip_file"
     fi
 } > "$clash_file"
 
 # Adblock格式
-{
-    printf "$DESCRIPTION_TEMPLATE" "$group" "Adblock" "$domain_count" "$(date '+%Y-%m-%d %H:%M:%S')"
-    awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "||"$0"^"}' "$domain_file"
-} > "$adblock_file"
+if [[ $domain_count -gt 0 ]]; then
+    {
+        printf "$DESCRIPTION_TEMPLATE" "$group" "Adblock" "$domain_count" "$(date '+%Y-%m-%d %H:%M:%S')"
+        awk '!/^(\s*$|#)/{gsub(/^[ \t]*/,"");gsub(/[ \t]*$/,""); print "||"$0"^"}' "$domain_file"
+    } > "$adblock_file"
+fi
 
 # sing-box格式
 {
@@ -314,23 +335,26 @@ fi
     echo "  \"rules\": ["
     
     # 域名规则
-    echo "    {"
-    echo "      \"domain_suffix\": ["
-    awk -v first=1 '
-    !/^(\s*$|#)/ {
-        gsub(/^[ \t]*/,"")
-        gsub(/[ \t]*$/,"")
-        if (!first) printf ",\n"
-        printf "        \"%s\"", $0
-        first=0
-    }' "$domain_file"
-    echo
-    echo "      ]"
-    echo "    }"
+    if [[ $domain_count -gt 0 ]]; then
+        echo "    {"
+        echo "      \"domain_suffix\": ["
+        awk -v first=1 '
+        !/^(\s*$|#)/ {
+            gsub(/^[ \t]*/,"")
+            gsub(/[ \t]*$/,"")
+            if (!first) printf ",\n"
+            printf "        \"%s\"", $0
+            first=0
+        }' "$domain_file"
+        echo
+        echo "      ]"
+        echo "    }"
+    fi
     
     # IP规则
     if [[ -s "$ip_file" ]]; then
-        echo "    ,{"
+        [[ $domain_count -gt 0 ]] && echo "    ,"
+        echo "    {"
         echo "      \"ip_cidr\": ["
         awk -v first=1 '
         !/^(\s*$|#)/ {
@@ -350,7 +374,7 @@ fi
 } > "$singbox_file"
 
 # 转换为srs格式
-if ! "./$SINGBOX_TOOL" rule-set compile "$singbox_file" -o "$singbox_srs_file"; then
+if ! "$TOOLS_DIR/$SINGBOX_TOOL" rule-set compile "$singbox_file" -o "$singbox_srs_file"; then
     error_exit "sing-box 工具转换失败"
 fi
 
@@ -358,19 +382,23 @@ fi
 # 文件整理
 # -----------------------------------------------------------------------------
 repo_root="$(cd ../.. && pwd)"
-mkdir -p "$repo_root/"{txt,mrs,domain,ip,clash,adblock,singbox,srs,.cache}
+mkdir -p "$repo_root/"{txt,mrs,domain,ip,clash,adblock,singbox,srs}
 
-mv "$mihomo_txt_file" "$repo_root/txt/"
-mv "$mihomo_mrs_file" "$repo_root/mrs/"
-mv "$domain_file" "$repo_root/domain/"
-[[ -f "$mihomo_ip_txt_file" ]] && mv "$mihomo_ip_txt_file" "$repo_root/txt/"
-[[ -f "$mihomo_ip_mrs_file" ]] && mv "$mihomo_ip_mrs_file" "$repo_root/mrs/"
-[[ -f "$ip_file" ]] && mv "$ip_file" "$repo_root/ip/"
+if [[ $domain_count -gt 0 ]]; then
+    mv "$mihomo_txt_file" "$repo_root/txt/"
+    mv "$mihomo_mrs_file" "$repo_root/mrs/"
+    mv "$domain_file" "$repo_root/domain/"
+    mv "$adblock_file" "$repo_root/adblock/"
+fi
+
+if [[ -s "$ip_file" ]]; then
+    mv "$mihomo_ip_txt_file" "$repo_root/txt/"
+    mv "$mihomo_ip_mrs_file" "$repo_root/mrs/"
+    mv "$ip_file" "$repo_root/ip/"
+fi
+
 mv "$clash_file" "$repo_root/clash/"
-mv "$adblock_file" "$repo_root/adblock/"
 mv "$singbox_file" "$repo_root/singbox/"
 mv "$singbox_srs_file" "$repo_root/srs/"
-
-rm -f "${group}_tmp.txt" "${group}_ip_tmp.txt"
 
 log_info "[完成] $group 规则生成并清理完毕"
