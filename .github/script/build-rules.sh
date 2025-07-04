@@ -3,7 +3,7 @@
 # 规则生成脚本 v3.0
 # 作者：ykvhjnn
 # 创建日期：2025-07-04
-# 最后更新：2025-07-04 12:06:12
+# 最后更新：2025-07-04 12:17:56
 # 
 # 功能：生成各种格式的分流规则，支持域名和IP规则
 # 支持格式：
@@ -19,25 +19,50 @@
 set -euo pipefail
 
 # =============================================================================
+# 锁文件和进程控制
+# =============================================================================
+readonly LOCK_FILE="/tmp/build-rules.lock"
+readonly PID_FILE="/tmp/build-rules.pid"
+
+# 确保只有一个实例在运行
+ensure_single_instance() {
+    if [[ -f "$LOCK_FILE" ]]; then
+        local pid
+        pid=$(cat "$PID_FILE" 2>/dev/null || echo "0")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo "错误: 另一个实例正在运行 (PID: $pid)"
+            exit 1
+        fi
+    fi
+    echo "$$" > "$PID_FILE"
+    touch "$LOCK_FILE"
+}
+
+# 清理锁文件
+cleanup_lock() {
+    rm -f "$LOCK_FILE" "$PID_FILE"
+}
+
+# =============================================================================
 # 常量定义
 # =============================================================================
-SCRIPT_VERSION="3.0"
-SCRIPT_DATE="2025-07-04"
-
-# 目录相关常量
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-TEMP_ROOT="/tmp"
-TEMP_DIR="${TEMP_ROOT}/rules_build_$(date +%Y%m%d_%H%M%S)_$$"
-TOOLS_DIR="${TEMP_DIR}/tools"
-PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
+readonly SCRIPT_VERSION="3.0"
+readonly SCRIPT_DATE="2025-07-04"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+readonly UNIQUE_ID="$(date +%Y%m%d_%H%M%S)_$$"
+readonly TEMP_DIR="/tmp/rules_build_${UNIQUE_ID}"
+readonly TOOLS_DIR="${TEMP_DIR}/tools"
+readonly PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
+readonly LOG_DIR="${REPO_ROOT}/logs"
+readonly LOG_FILE="${LOG_DIR}/build-rules_${UNIQUE_ID}.log"
 
 # 工具相关常量
-MIHOMO_TOOL="mihomo"
-SINGBOX_TOOL="sing-box"
+readonly MIHOMO_TOOL="mihomo"
+readonly SINGBOX_TOOL="sing-box"
 
 # 输出目录
-OUTPUT_DIRS=(
+readonly OUTPUT_DIRS=(
     "txt"
     "mrs"
     "domain"
@@ -46,10 +71,11 @@ OUTPUT_DIRS=(
     "adblock"
     "singbox"
     "srs"
+    "logs"
 )
 
 # 描述模板
-DESCRIPTION_TEMPLATE="# ============================================
+readonly DESCRIPTION_TEMPLATE="# ============================================
 # 名称：%s Rules
 # 类型：%s
 # 规则数量：%d
@@ -61,10 +87,20 @@ DESCRIPTION_TEMPLATE="# ============================================
 "
 
 # =============================================================================
-# 辅助函数
-# =============================================================================
-
 # 日志函数
+# =============================================================================
+setup_logging() {
+    # 创建日志目录
+    mkdir -p "$LOG_DIR"
+    
+    # 确保日志文件存在
+    touch "$LOG_FILE"
+    
+    # 重定向所有输出到日志文件
+    exec 1> >(tee -a "$LOG_FILE")
+    exec 2> >(tee -a "$LOG_FILE" >&2)
+}
+
 log_info() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $*"
 }
@@ -77,27 +113,61 @@ log_error() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $*" >&2
 }
 
-# 清理函数
-cleanup() {
-    local exit_code=$?
-    log_info "开始清理临时文件..."
-    if [[ -d "${TEMP_DIR}" ]]; then
-        rm -rf "${TEMP_DIR}"
-        log_info "临时目录已清理: ${TEMP_DIR}"
-    fi
-    if [[ $exit_code -ne 0 ]]; then
-        log_error "脚本执行失败，退出码: ${exit_code}"
+log_debug() {
+    if [[ "${DEBUG:-false}" == "true" ]]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [DEBUG] $*"
     fi
 }
 
-# 错误处理函数
+# =============================================================================
+# 错误处理
+# =============================================================================
+handle_error() {
+    local exit_code=$?
+    local line_number=$1
+    log_error "在第 ${line_number} 行发生错误，退出码: ${exit_code}"
+    cleanup
+    exit $exit_code
+}
+
+# 设置错误处理
+trap 'handle_error ${LINENO}' ERR
+
+# =============================================================================
+# 清理函数
+# =============================================================================
+cleanup() {
+    local exit_code=$?
+    log_info "开始清理..."
+    
+    # 清理临时目录
+    if [[ -d "${TEMP_DIR}" ]]; then
+        rm -rf "${TEMP_DIR}"
+        log_info "已清理临时目录: ${TEMP_DIR}"
+    fi
+    
+    # 清理锁文件
+    cleanup_lock
+    
+    # 记录退出状态
+    if [[ $exit_code -ne 0 ]]; then
+        log_error "脚本执行失败，退出码: ${exit_code}"
+    else
+        log_info "脚本执行成功"
+    fi
+}
+
+# 设置清理钩子
+trap cleanup EXIT
+
+# =============================================================================
+# 辅助函数
+# =============================================================================
 error_exit() {
     log_error "$1"
-    cleanup
     exit 1
 }
 
-# 检查并创建目录
 check_and_create_dir() {
     local dir="$1"
     if [[ ! -d "$dir" ]]; then
@@ -106,27 +176,16 @@ check_and_create_dir() {
     fi
 }
 
-# 添加描述信息到文件
-add_description() {
-    local file="$1"
-    local group="$2"
-    local type="$3"
-    local count="$4"
-    local timestamp
-    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
-    local temp_file="${TEMP_DIR}/desc_temp_$$"
-    
-    printf "$DESCRIPTION_TEMPLATE" \
-        "$group" \
-        "$type" \
-        "$count" \
-        "$timestamp" > "$temp_file"
-    
-    cat "$file" >> "$temp_file"
-    mv "$temp_file" "$file"
+validate_group() {
+    local group="$1"
+    if [[ -z "${urls_map[$group]:-}" ]]; then
+        error_exit "未找到组: $group"
+    fi
 }
 
-# 检查依赖工具
+# =============================================================================
+# 依赖检查
+# =============================================================================
 check_dependencies() {
     local missing_deps=()
     local required_deps=(
@@ -137,6 +196,7 @@ check_dependencies() {
         "tar"
         "awk"
         "sed"
+        "tee"
     )
 
     for dep in "${required_deps[@]}"; do
@@ -150,25 +210,39 @@ check_dependencies() {
     fi
 }
 
-# 检查Python脚本
+# =============================================================================
+# Python脚本检查
+# =============================================================================
 check_python_scripts() {
     local group="$1"
     
-    # 检查Python脚本目录是否存在
+    # 检查Python脚本目录
     if [[ ! -d "$PYTHON_SCRIPTS_DIR" ]]; then
         error_exit "Python脚本目录不存在: $PYTHON_SCRIPTS_DIR"
-    fi
+    }
+    
+    # 检查Python版本
+    local python_version
+    python_version=$(python3 --version 2>&1)
+    log_info "使用的Python版本: $python_version"
     
     # 检查所需的Python脚本
     local required_scripts="${py_scripts[$group]}"
     for script in $required_scripts; do
-        if [[ ! -f "${PYTHON_SCRIPTS_DIR}/${script}" ]]; then
+        local script_path="${PYTHON_SCRIPTS_DIR}/${script}"
+        if [[ ! -f "$script_path" ]]; then
             error_exit "缺少必要的Python脚本: ${script}"
         fi
+        if [[ ! -r "$script_path" ]]; then
+            error_exit "Python脚本无法读取: ${script}"
+        }
+        log_debug "找到Python脚本: ${script}"
     done
 }
 
-# 创建目录
+# =============================================================================
+# 目录创建
+# =============================================================================
 create_directories() {
     log_info "创建必要的目录..."
     
@@ -180,9 +254,6 @@ create_directories() {
     for dir in "${OUTPUT_DIRS[@]}"; do
         check_and_create_dir "${REPO_ROOT}/${dir}"
     done
-    
-    # 检查Python脚本目录
-    check_and_create_dir "${PYTHON_SCRIPTS_DIR}"
 }
 
 # =============================================================================
@@ -381,9 +452,9 @@ download_rules() {
     
     log_info "开始下载 ${group} 规则..."
     
-    # 处理域名规则
     local max_concurrent=8
-    local current_jobs=0
+    local active_jobs=0
+    declare -A downloaded_files
     
     download_url() {
         local url="$1"
@@ -393,41 +464,60 @@ download_rules() {
         local temp_file="${TEMP_DIR}/${type}_${RANDOM}.tmp"
         if curl --http2 --compressed --max-time 30 --retry 2 -sSL "$url" > "$temp_file"; then
             log_info "成功下载${type}规则: $url"
-            cat "$temp_file" >> "$output"
+            {
+                flock -x 200
+                cat "$temp_file" >> "$output"
+            } 200>>"$output.lock"
+            downloaded_files["$url"]=1
         else
             log_warn "下载${type}规则失败: $url"
         fi
         rm -f "$temp_file"
     }
     
-    # 下载域名规则
+    # 并发下载域名规则
     while IFS= read -r url; do
         [[ -z "$url" ]] && continue
-        ((current_jobs++))
-        download_url "$url" "$domain_file" "域名" &
         
-        if ((current_jobs >= max_concurrent)); then
+        # 等待如果当前作业数达到最大值
+        while [[ $active_jobs -ge $max_concurrent ]]; do
             wait -n
-            ((current_jobs--))
-        fi
+            ((active_jobs--))
+        done
+        
+        download_url "$url" "$domain_file" "域名" &
+        ((active_jobs++))
+        
     done <<< "${urls_map[$group]}"
     
-    # 下载IP规则
+    # 并发下载IP规则
     if [[ -n "${ip_urls_map[$group]:-}" ]]; then
         while IFS= read -r url; do
             [[ -z "$url" ]] && continue
-            ((current_jobs++))
-            download_url "$url" "$ip_file" "IP" &
             
-            if ((current_jobs >= max_concurrent)); then
+            while [[ $active_jobs -ge $max_concurrent ]]; do
                 wait -n
-                ((current_jobs--))
-            fi
+                ((active_jobs--))
+            done
+            
+            download_url "$url" "$ip_file" "IP" &
+            ((active_jobs++))
+            
         done <<< "${ip_urls_map[$group]}"
     fi
     
     # 等待所有下载完成
     wait
+    
+    # 删除锁文件
+    rm -f "${domain_file}.lock" "${ip_file}.lock"
+    
+    # 检查是否有规则下载成功
+    if [[ ${#downloaded_files[@]} -eq 0 ]]; then
+        error_exit "没有成功下载任何规则"
+    fi
+    
+    log_info "规则下载完成"
 }
 
 # 处理规则
@@ -441,22 +531,36 @@ process_rules() {
     # 转换行尾
     sed -i 's/\r//' "$domain_file" "$ip_file"
     
-    # 检查Python脚本
-    check_python_scripts "$group"
+    # 处理空文件
+    if [[ ! -s "$domain_file" && ! -s "$ip_file" ]]; then
+        error_exit "域名规则文件和IP规则文件都为空"
+    fi
     
     # 执行Python清洗脚本
+    local current_dir="$PWD"
+    cd "$PYTHON_SCRIPTS_DIR" || error_exit "无法进入Python脚本目录: $PYTHON_SCRIPTS_DIR"
+    
     for script in ${py_scripts[$group]}; do
         log_info "执行脚本: $script"
-        if ! python3 "${PYTHON_SCRIPTS_DIR}/${script}" "$domain_file"; then
+        if ! python3 "$script" "$domain_file"; then
+            cd "$current_dir" || true
             error_exit "Python脚本 $script 执行失败"
         fi
     done
     
+    cd "$current_dir" || log_warn "返回原始目录失败"
+    
     # 统计规则数量
-    local domain_count
-    local ip_count
-    domain_count=$(grep -vE '^\s*$|^#' "$domain_file" | wc -l)
-    ip_count=$(grep -vE '^\s*$|^#' "$ip_file" | wc -l)
+    local domain_count=0
+    local ip_count=0
+    
+    if [[ -f "$domain_file" ]]; then
+        domain_count=$(grep -vE '^\s*$|^#' "$domain_file" | wc -l)
+    fi
+    
+    if [[ -f "$ip_file" ]]; then
+        ip_count=$(grep -vE '^\s*$|^#' "$ip_file" | wc -l)
+    fi
     
     log_info "域名规则数量: $domain_count"
     log_info "IP规则数量: $ip_count"
@@ -590,6 +694,8 @@ generate_rules() {
     mv "$clash_file" "${REPO_ROOT}/clash/"
     mv "$singbox_file" "${REPO_ROOT}/singbox/"
     mv "$singbox_srs_file" "${REPO_ROOT}/srs/"
+    
+    log_info "规则文件生成完成"
 }
 
 # =============================================================================
@@ -599,6 +705,16 @@ main() {
     local start_time
     start_time=$(date +%s)
     
+    # 确保只有一个实例在运行
+    ensure_single_instance
+    
+    # 设置日志
+    setup_logging
+    
+    log_info "开始执行规则生成脚本 v${SCRIPT_VERSION}"
+    log_info "脚本路径: $SCRIPT_DIR"
+    log_info "仓库根目录: $REPO_ROOT"
+    
     # 参数检查
     if [[ $# -ne 1 ]]; then
         echo "用法: $0 [组名]"
@@ -607,6 +723,7 @@ main() {
         for k in "${!urls_map[@]}"; do
             echo "  - $k"
         done
+        cleanup_lock
         exit 1
     fi
     
@@ -616,9 +733,7 @@ main() {
     init_rule_sources
     
     # 检查组是否存在
-    if [[ -z "${urls_map[$group]:-}" ]]; then
-        error_exit "未找到组: $group"
-    fi
+    validate_group "$group"
     
     # 设置清理钩子
     trap cleanup EXIT
@@ -659,6 +774,7 @@ main() {
     
     log_info "[完成] $group 规则生成完毕"
     log_info "执行时间: ${duration} 秒"
+    log_info "日志文件: $LOG_FILE"
 }
 
 # 执行主程序
