@@ -1,8 +1,8 @@
 # ============================================
 # 名称：Proxy Rules
 # 类型：Clash
-# 规则数量：22456
-# 生成时间：2025-07-04 17:40:57
+# 规则数量：22457
+# 生成时间：2025-07-04 19:05:10
 # 生成工具：build-rules.sh v2.0
 # 发布地址：https://github.com/ykvhjnn/Rules
 # ============================================
@@ -18065,6 +18065,7 @@ DOMAIN-SUFFIX,sshs.pw
 DOMAIN-SUFFIX,sshs.xyz
 DOMAIN-SUFFIX,ssl.com
 DOMAIN-SUFFIX,ssl-images-amazon.com
+DOMAIN-SUFFIX,ssl443.org
 DOMAIN-SUFFIX,sslpaypal.org
 DOMAIN-SUFFIX,sspanel.net
 DOMAIN-SUFFIX,sspanel.org

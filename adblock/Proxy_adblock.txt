@@ -1,8 +1,8 @@
 # ============================================
 # 名称：Proxy Rules
 # 类型：Adblock
-# 规则数量：22154
-# 生成时间：2025-07-04 17:40:57
+# 规则数量：22155
+# 生成时间：2025-07-04 19:05:10
 # 生成工具：build-rules.sh v2.0
 # 发布地址：https://github.com/ykvhjnn/Rules
 # ============================================
@@ -18065,6 +18065,7 @@
 ||sshs.xyz^
 ||ssl.com^
 ||ssl-images-amazon.com^
+||ssl443.org^
 ||sslpaypal.org^
 ||sspanel.net^
 ||sspanel.org^
