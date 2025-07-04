@@ -30,21 +30,21 @@ readonly DESCRIPTION_TEMPLATE="# ============================================
 # -----------------------------------------------------------------------------
 # 辅助函数
 # -----------------------------------------------------------------------------
-function error_exit() {
+error_exit() {
     echo "[$(date '+%H:%M:%S')] [ERROR] $1" >&2
     cleanup
     exit 1
 }
 
-function log_info() {
+log_info() {
     echo "[$(date '+%H:%M:%S')] [INFO] $1"
 }
 
-function log_warn() {
+log_warn() {
     echo "[$(date '+%H:%M:%S')] [WARN] $1" >&2
 }
 
-function add_description() {
+add_description() {
     local file="$1"
     local group="$2"
     local type="$3"
@@ -54,7 +54,7 @@ function add_description() {
     printf "$DESCRIPTION_TEMPLATE" "$group" "$type" "$count" "$timestamp" | cat - "$file" > "$temp_file" && mv "$temp_file" "$file"
 }
 
-function cleanup() {
+cleanup() {
     log_info "清理临时文件..."
     rm -rf "$TEMP_DIR"
 }
@@ -62,7 +62,7 @@ function cleanup() {
 # -----------------------------------------------------------------------------
 # 工具下载函数
 # -----------------------------------------------------------------------------
-function download_mihomo() {
+download_mihomo() {
     local tool_path="$TOOLS_DIR/$MIHOMO_TOOL"
     if [[ -f "$tool_path" && -x "$tool_path" ]]; then
         log_info "Mihomo 工具已存在，跳过下载"
@@ -87,12 +87,12 @@ function download_mihomo() {
     rm -f "$version_file"
 }
 
-function download_singbox() {
+download_singbox() {
     local tool_path="$TOOLS_DIR/$SINGBOX_TOOL"
     if [[ -f "$tool_path" && -x "$tool_path" ]]; then
         log_info "sing-box 工具已存在，跳过下载"
         return
-    }
+    fi
     
     mkdir -p "$TOOLS_DIR"
     log_info "开始下载 sing-box 工具..."
@@ -119,8 +119,8 @@ function download_singbox() {
 # -----------------------------------------------------------------------------
 # 规则源配置
 # -----------------------------------------------------------------------------
-declare -A urls_map=(
-    ["Proxy"]="
+declare -A urls_map
+urls_map["Proxy"]="
 https://ruleset.skk.moe/Clash/domainset/speedtest.txt
 https://ruleset.skk.moe/Clash/non_ip/my_proxy.txt
 https://ruleset.skk.moe/Clash/non_ip/ai.txt
@@ -129,13 +129,13 @@ https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/pr
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/Global/Global_Domain_For_Clash.txt
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Proxy.txt"
 
-    ["Directfix"]="
+urls_map["Directfix"]="
 https://ruleset.skk.moe/Clash/non_ip/microsoft_cdn.txt
 https://ruleset.skk.moe/Clash/non_ip/lan.txt
 https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/private.list
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Direct.txt"
 
-    ["Ad"]="
+urls_map["Ad"]="
 https://raw.githubusercontent.com/ghvjjjj/adblockfilters/refs/heads/main/rules/adblockdomain.txt
 https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdomainlite.txt
 https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-adguard.txt
@@ -147,21 +147,18 @@ https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.sams
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.huawei.txt
 https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Ad.txt"
 
-    ["Direct"]="
+urls_map["Direct"]="
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/China/China_Domain_For_Clash.txt"
-)
 
-declare -A ip_urls_map=(
-    ["Proxy"]="
+declare -A ip_urls_map
+ip_urls_map["Proxy"]="
 https://raw.githubusercontent.com/pmkol/easymosdns/refs/heads/main/rules/gfw_ip_list.txt"
-)
 
-declare -A py_scripts=(
-    ["Proxy"]="collect.py remove_domains_Proxy.py clean.py add_domains_Proxy.py"
-    ["Directfix"]="collect.py clean.py"
-    ["Ad"]="collect.py remove_domains_Ad.py clean.py add_domains_Ad.py"
-    ["Direct"]="collect.py clean.py"
-)
+declare -A py_scripts
+py_scripts["Proxy"]="collect.py remove_domains_Proxy.py clean.py add_domains_Proxy.py"
+py_scripts["Directfix"]="collect.py clean.py"
+py_scripts["Ad"]="collect.py remove_domains_Ad.py clean.py add_domains_Ad.py"
+py_scripts["Direct"]="collect.py clean.py"
 
 # -----------------------------------------------------------------------------
 # 参数检查
