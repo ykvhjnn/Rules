@@ -143,14 +143,33 @@ ip_urls_map["Proxy"]="
 https://raw.githubusercontent.com/pmkol/easymosdns/refs/heads/main/rules/gfw_ip_list.txt
 "
 
-# ... 其他规则组定义 ...
+urls_map["Directfix"]="
+https://ruleset.skk.moe/Clash/non_ip/microsoft_cdn.txt
+https://ruleset.skk.moe/Clash/non_ip/lan.txt
+https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/private.list
+https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Direct.txt
+"
+
+urls_map["Ad"]="
+https://raw.githubusercontent.com/ghvjjjj/adblockfilters/refs/heads/main/rules/adblockdomain.txt
+https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdomainlite.txt
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-adguard.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.xiaomi.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.oppo-realme.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.vivo.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.tiktok.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.samsung.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.huawei.txt
+https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Ad.txt
+"
 
 # -----------------------------------------------------------------------------
 # 【步骤5】Python脚本定义
 # -----------------------------------------------------------------------------
 declare -A py_scripts
 py_scripts["Proxy"]="collect.py remove_domains_Proxy.py clean.py add_domains_Proxy.py"
-# ... 其他组的Python脚本定义 ...
+py_scripts["Directfix"]="collect.py clean.py"
+py_scripts["Ad"]="collect.py remove_domains_Ad.py clean.py add_domains_Ad.py"
 
 # -----------------------------------------------------------------------------
 # 【步骤6】参数校验
