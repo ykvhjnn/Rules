@@ -1,3 +1,0 @@
-# sing-box JSON格式规则
-此目录包含sing-box JSON格式规则。
-Last updated: 2025-07-04 09:27:26
