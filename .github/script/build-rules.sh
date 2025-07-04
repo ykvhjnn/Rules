@@ -3,7 +3,7 @@
 # 规则生成脚本 v3.0
 # 作者：ykvhjnn
 # 创建日期：2025-07-04
-# 最后更新：2025-07-04
+# 最后更新：2025-07-04 11:46:18
 # 
 # 功能：生成各种格式的分流规则，支持域名和IP规则
 # 支持格式：
@@ -21,47 +21,35 @@ set -euo pipefail
 # =============================================================================
 # 常量定义
 # =============================================================================
-readonly SCRIPT_VERSION="3.0"
-readonly SCRIPT_DATE="2025-07-04"
+SCRIPT_VERSION="3.0"
+SCRIPT_DATE="2025-07-04"
 
 # 目录相关常量
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-readonly TEMP_ROOT="/tmp"
-readonly TEMP_DIR="${TEMP_ROOT}/rules_build_$(date +%Y%m%d_%H%M%S)_$$"
-readonly TOOLS_DIR="${TEMP_DIR}/tools"
-readonly PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+TEMP_ROOT="/tmp"
+TEMP_DIR="${TEMP_ROOT}/rules_build_$(date +%Y%m%d_%H%M%S)_$$"
+TOOLS_DIR="${TEMP_DIR}/tools"
+PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
 
 # 工具相关常量
-readonly MIHOMO_TOOL="mihomo"
-readonly SINGBOX_TOOL="sing-box"
+MIHOMO_TOOL="mihomo"
+SINGBOX_TOOL="sing-box"
 
-# 文件夹列表
-readonly OUTPUT_DIRS=(
-    "txt"
-    "mrs"
-    "domain"
-    "ip"
-    "clash"
-    "adblock"
-    "singbox"
-    "srs"
-)
-
-# 输出模板
-readonly DESCRIPTION_TEMPLATE='# ============================================
+# 描述模板
+DESCRIPTION_TEMPLATE="# ============================================
 # 名称：%s Rules
 # 类型：%s
 # 规则数量：%d
 # 生成时间：%s
-# 生成工具：build-rules.sh v%s
+# 生成工具：build-rules.sh v${SCRIPT_VERSION}
 # 发布地址：https://github.com/ykvhjnn/Rules
 # ============================================
 
-'
+"
 
 # =============================================================================
-# 工具函数
+# 辅助函数
 # =============================================================================
 
 # 日志函数
@@ -111,8 +99,7 @@ add_description() {
         "$group" \
         "$type" \
         "$count" \
-        "$timestamp" \
-        "${SCRIPT_VERSION}" > "$temp_file"
+        "$timestamp" > "$temp_file"
     
     cat "$file" >> "$temp_file"
     mv "$temp_file" "$file"
@@ -150,7 +137,18 @@ create_directories() {
     mkdir -p "${TEMP_DIR}" "${TOOLS_DIR}"
     
     # 创建输出目录
-    for dir in "${OUTPUT_DIRS[@]}"; do
+    local dirs=(
+        "txt"
+        "mrs"
+        "domain"
+        "ip"
+        "clash"
+        "adblock"
+        "singbox"
+        "srs"
+    )
+    
+    for dir in "${dirs[@]}"; do
         mkdir -p "${REPO_ROOT}/${dir}"
     done
 }
@@ -193,12 +191,12 @@ download_mihomo() {
          -O "$gz_file"; then
         rm -rf "$tmp_dir"
         error_exit "下载 Mihomo 工具失败"
-    }
+    fi
     
     if ! gzip -f -d "$gz_file"; then
         rm -rf "$tmp_dir"
         error_exit "解压 Mihomo 工具失败"
-    }
+    fi
     
     local bin_file="${tmp_dir}/${tool_name}"
     if [[ ! -f "$bin_file" ]]; then
@@ -249,7 +247,7 @@ download_singbox() {
          -O "$temp_archive"; then
         rm -rf "$tmp_dir"
         error_exit "下载 sing-box 工具失败"
-    }
+    fi
     
     cd "$tmp_dir" || {
         rm -rf "$tmp_dir"
@@ -259,13 +257,13 @@ download_singbox() {
     if ! tar xzf "$archive_name"; then
         rm -rf "$tmp_dir"
         error_exit "解压 sing-box 工具失败"
-    }
+    fi
     
     local extracted_dir="sing-box-${latest_version}-linux-amd64"
     if [[ ! -f "${extracted_dir}/sing-box" ]]; then
         rm -rf "$tmp_dir"
         error_exit "sing-box 工具文件不存在"
-    }
+    fi
     
     mv "${extracted_dir}/sing-box" "$tool_path" || {
         rm -rf "$tmp_dir"
@@ -286,48 +284,48 @@ download_singbox() {
 # 规则源配置
 # =============================================================================
 
-# 初始化规则源映射
+# 初始化规则源
+declare -A urls_map
+declare -A ip_urls_map
+declare -A py_scripts
+
 init_rule_sources() {
     # 域名规则源
-    declare -g -A urls_map
-    
     urls_map["Proxy"]="
 https://ruleset.skk.moe/Clash/domainset/speedtest.txt
 https://ruleset.skk.moe/Clash/non_ip/my_proxy.txt
 https://ruleset.skk.moe/Clash/non_ip/ai.txt
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/GitHub/GitHub.list
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GitHub/GitHub.list
 https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/proxy.list
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/Global/Global_Domain_For_Clash.txt
-https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Proxy.txt"
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Global/Global_Domain.txt
+https://raw.githubusercontent.com/ykvhjnn/Rules/main/Add/Proxy.txt"
 
     urls_map["Directfix"]="
 https://ruleset.skk.moe/Clash/non_ip/microsoft_cdn.txt
 https://ruleset.skk.moe/Clash/non_ip/lan.txt
 https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/private.list
-https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Direct.txt"
+https://raw.githubusercontent.com/ykvhjnn/Rules/main/Add/Direct.txt"
 
     urls_map["Ad"]="
-https://raw.githubusercontent.com/ghvjjjj/adblockfilters/refs/heads/main/rules/adblockdomain.txt
+https://raw.githubusercontent.com/ghvjjjj/adblockfilters/main/rules/adblockdomain.txt
 https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdomainlite.txt
-https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/refs/heads/master/anti-ad-adguard.txt
+https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-adguard.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.xiaomi.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.oppo-realme.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.vivo.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.tiktok.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.samsung.txt
 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/native.huawei.txt
-https://raw.githubusercontent.com/ykvhjnn/Rules/refs/heads/main/Add/Ad.txt"
+https://raw.githubusercontent.com/ykvhjnn/Rules/main/Add/Ad.txt"
 
     urls_map["Direct"]="
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/China/China_Domain_For_Clash.txt"
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/China/China_Domain.txt"
 
     # IP规则源
-    declare -g -A ip_urls_map
     ip_urls_map["Proxy"]="
-https://raw.githubusercontent.com/pmkol/easymosdns/refs/heads/main/rules/gfw_ip_list.txt"
+https://raw.githubusercontent.com/pmkol/easymosdns/main/rules/gfw_ip_list.txt"
 
-    # Python 脚本映射
-    declare -g -A py_scripts
+    # Python 脚本配置
     py_scripts["Proxy"]="collect.py remove_domains_Proxy.py clean.py add_domains_Proxy.py"
     py_scripts["Directfix"]="collect.py clean.py"
     py_scripts["Ad"]="collect.py remove_domains_Ad.py clean.py add_domains_Ad.py"
@@ -386,7 +384,6 @@ download_rules() {
         wait
     fi
 }
-
 # 处理规则
 process_rules() {
     local group="$1"
