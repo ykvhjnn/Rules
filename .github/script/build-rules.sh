@@ -33,8 +33,8 @@ TOOLS_DIR="${SCRIPT_DIR}"  # 工具目录与脚本目录相同
 PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
 
 # 工具相关常量
-MIHOMO_TOOL="mihomo_tool"
-SINGBOX_TOOL="sing-box_tool"
+MIHOMO_TOOL=".mihomo_tool"
+SINGBOX_TOOL=".sing-box_tool"
 
 # 输出目录
 OUTPUT_DIRS=(
