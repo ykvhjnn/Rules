@@ -16125,7 +16125,6 @@ DOMAIN-SUFFIX,puredns.org
 DOMAIN-SUFFIX,pureinsight.org
 DOMAIN-SUFFIX,purelov5.com
 DOMAIN-SUFFIX,purelyceleb.com
-DOMAIN-SUFFIX,purenudism.com
 DOMAIN-SUFFIX,purepdf.com
 DOMAIN-SUFFIX,puresexmovies.com
 DOMAIN-SUFFIX,puretaboo.com
