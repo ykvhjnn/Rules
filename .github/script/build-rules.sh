@@ -3,7 +3,7 @@
 # 规则生成脚本 v3.0
 # 作者：ykvhjnn
 # 创建日期：2025-07-04
-# 最后更新：2025-07-04 12:06:12
+# 最后更新：2025-07-04 13:20:33
 # 
 # 功能：生成各种格式的分流规则，支持域名和IP规则
 # 支持格式：
@@ -29,7 +29,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 TEMP_ROOT="/tmp"
 TEMP_DIR="${TEMP_ROOT}/rules_build_$(date +%Y%m%d_%H%M%S)_$$"
-TOOLS_DIR="${TEMP_DIR}/tools"
+TOOLS_DIR="${SCRIPT_DIR}"  # 修改：工具目录改为脚本所在目录
 PYTHON_SCRIPTS_DIR="${SCRIPT_DIR}/python"
 
 # 工具相关常量
@@ -316,7 +316,6 @@ download_singbox() {
     rm -rf "$tmp_dir"
     log_info "sing-box 工具安装完成"
 }
-
 # =============================================================================
 # 规则源配置
 # =============================================================================
